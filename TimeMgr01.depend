@@ -1,0 +1,8 @@
+# depslib dependency file v1.0
+1404226266 source:c:\users\benjamin\documents\codeblocks\timemgr01\timemgr.cpp
+	<iostream>
+	<fstream>
+	<string>
+	<vector>
+	<map>
+
