@@ -9,10 +9,12 @@ Copy the file *tm.exe* in the directory you want to store the data. To use TimeM
 
 First use: call *tm init*
 
-Commands:
+#Commands:
+```
 tm list		list all available tasks
 tm add		add a new task
 tm remove	remove a task
 tm start	start a task
 tm end		end the active task
 tm status	shows the active task
+```
