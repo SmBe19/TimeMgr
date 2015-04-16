@@ -5,6 +5,8 @@ Console Time Manager
 
 Allows you to keep track of used time for a given task.
 
+Compile the file timemgr.cpp, e.g. as tm.exe.
+
 Copy the file *tm.exe* in the directory you want to store the data. To use TimeMgr open a terminal and change to the directory where you copied *tm.exe*.
 
 First use: call *tm init*
