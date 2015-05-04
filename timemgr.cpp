@@ -7,174 +7,189 @@
 
 using namespace std;
 
-void outputNiceTimespan(int timespan)
-{
-    int d, h, m, s;
-    s = timespan % 60;
-    timespan /= 60;
-    m = timespan % 60;
-    timespan /= 60;
-    h = timespan % 24;
-    timespan /= 24;
-    d = timespan;
+typedef pair<string, int> task;
+typedef vector<task > tasklist;
 
-    if(d > 0)
-        cout << d << "d " << h << "h " << m << "min " << s << "s";
-    else if(h > 0)
-        cout << h << "h " << m << "min " << s << "s";
-    else if(m > 0)
-        cout << m << "min " << s << "s";
-    else
-        cout << s << "s";
+const string timemgrFile = "timemgr.txt";
+const string timemgrlogFile = "timemgrlog.txt";
+map<string, string> alias;
+
+// helper methods
+
+void outputNiceTimespan(int timespan){
+	int d, h, m, s;
+	s = timespan % 60;
+	timespan /= 60;
+	m = timespan % 60;
+	timespan /= 60;
+	h = timespan % 24;
+	timespan /= 24;
+	d = timespan;
+
+	if(d > 0){
+		cout << d << "d " << h << "h " << m << "min " << s << "s";
+	}else if(h > 0){
+		cout << h << "h " << m << "min " << s << "s";
+	}else if(m > 0){
+		cout << m << "min " << s << "s";
+	}else{
+		cout << s << "s";
+	}
 }
 
-void toLower(string& s)
-{
-    for(int i = 0; i < s.size(); i++)
-    {
-        if(s[i] >= 'A' && s[i] <= 'Z')
-        {
-            s[i] -= 'A' - 'a';
-        }
-    }
+void toLower(string& s){
+	for(int i = 0; i < s.size(); i++){
+		if(s[i] >= 'A' && s[i] <= 'Z'){
+			s[i] -= 'A' - 'a';
+		}
+	}
 }
 
-string replaceAlias(string cmd)
-{
+void initAlias(){
+	alias["l"] = "list";
+	alias["."] = "list";
+	alias["a"] = "add";
+	alias["+"] = "add";
+	alias["r"] = "remove";
+	alias["rm"] = "remove";
+	alias["-"] = "remove";
+	alias["s"] = "start";
+	alias[":"] = "start";
+	alias["e"] = "end";
+	alias[";"] = "end";
+	alias["stop"] = "end";
+	alias["st"] = "status";
+	alias[","] = "status";
+	alias["res"] = "reset";
+	alias["_"] = "reset";
+	alias["ar"] = "archive";
+	alias["%"] = "archive";
+	alias["++"] = "sum";
+	alias["!"] = "sum";
+	alias["h"] = "help";
+	alias["?"] = "help";
+	alias["/?"] = "help";
+	alias["pa"] = "printalias";
+}
+
+string replaceAlias(string cmd){
 	string ncmd = cmd;
 	
-    map<string, string> alias;
-    alias["l"] = "list";
-    alias["a"] = "add";
-    alias["+"] = "add";
-    alias["r"] = "remove";
-    alias["rm"] = "remove";
-    alias["-"] = "remove";
-    alias["s"] = "start";
-    alias["e"] = "end";
-	alias["stop"] = "stop";
-    alias["st"] = "status";
-    alias["."] = "status";
-    alias["h"] = "help";
-    alias["?"] = "help";
-    alias["/?"] = "help";
-	
-    if(alias.find(ncmd) != alias.end())
-        ncmd = alias[ncmd];
+	if(alias.find(ncmd) != alias.end()){
+		ncmd = alias[ncmd];
+	}
 	
 	return ncmd;
 }
 
-int findTaskNum(vector<pair<string, int> >& tasks, string name)
-{
-	for(int i = 0; i < tasks.size(); i++)
-	{
-		if(tasks[i].first == name)
-		{
+bool askConfirmation(string question){
+	cout << question << endl;
+	string response;
+	do{
+		cin >> response;
+	} while(response != "y" && response != "n");
+	
+	return response == "y";
+}
+
+int findTaskNum(tasklist& tasks, string name){
+	try{
+		return  stoi(name);
+	} catch (invalid_argument e){}
+	
+	for(int i = 0; i < tasks.size(); i++){
+		if(tasks[i].first == name){
 			return i;
 		}
 	}
 	return -1;
 }
 
-bool fileExists()
-{
-	ifstream f("timemgr.txt");
-    if (f.good()) {
-        f.close();
-        return true;
-    } else {
-        f.close();
-        return false;
-    }
+bool fileExists(string filename){
+	ifstream f(filename);
+	if (f.good()) {
+		f.close();
+		return true;
+	} else {
+		f.close();
+		return false;
+	}
 }
 
-void readFile(vector<pair<string, int> >& tasks, pair<string, int>& activeTask)
-{
-        // Read file
-        ifstream fin("timemgr.txt");
-        int n;
-        fin >> n;
-        tasks.resize(n);
-        for(int i = 0; i < n; i++)
-        {
-            fin >> tasks[i].first >> tasks[i].second;
-        }
+void readFile(string filename, tasklist& tasks, task& activeTask){
+	// Read file
+	ifstream fin(filename);
+	int n;
+	fin >> n;
+	tasks.resize(n);
+	for(int i = 0; i < n; i++){
+		fin >> tasks[i].first >> tasks[i].second;
+	}
 
-        fin >> activeTask.first >> activeTask.second;
+	fin >> activeTask.first >> activeTask.second;
 
-        fin.close();
+	fin.close();
 }
 
-void writeFile(vector<pair<string, int> >& tasks, pair<string, int>& activeTask)
-{
-        ofstream fout("timemgr.txt");
-        fout << tasks.size() << endl;
-        for(int i = 0; i < tasks.size(); i++)
-        {
-            fout << tasks[i].first << " " << tasks[i].second << "\n";
-        }
+void writeFile(string filename, tasklist& tasks, task& activeTask){
+	ofstream fout(filename);
+	fout << tasks.size() << endl;
+	for(int i = 0; i < tasks.size(); i++){
+		fout << tasks[i].first << " " << tasks[i].second << "\n";
+	}
 
-        fout << activeTask.first << " " << activeTask.second << endl;
-        fout.close();
+	fout << activeTask.first << " " << activeTask.second << endl;
+	fout.close();
 }
 
-void init()
-{
-	if(fileExists())
-{
-		cout << "this will erase all your data. Continue? (y/n)" << endl;
-		string response;
-		do
-		{
-			cin >> response;
-		} while(response != "y" && response != "n");
-		if(response == "n")
-		{
+// official methods
+
+void init(){
+	if(fileExists(timemgrFile)){
+		if(!askConfirmation("this will erase all your data. Continue? (y/n)")){
 			return;
 		}
 	}
-	ofstream fout ("timemgr.txt");
+	ofstream fout (timemgrFile);
 	fout << "0" << endl;
 	fout << "null 0" << endl;
 	fout.close();
 	cout << "Done" << endl;
 
-	ofstream log("timemgrlog.txt");
+	ofstream log(timemgrlogFile);
 	log << "TimeMgr log" << endl;
 	log.close();
 }
 
-void help()
-{
-        cout << "TimeMgr" << endl;
-        cout << "(c) 2014 Benjamin Schmid" << endl;
-        cout << endl;
-        cout << "Available commands:" << endl;
-        cout << "list, add, remove, start, end, status, help" << endl;
+void help(){
+	cout << "TimeMgr" << endl;
+	cout << "(c) 2014 - 2015 Benjamin Schmid" << endl;
+	cout << endl;
+	cout << "Available commands:" << endl;
+	cout << "init, list, add, remove, start, end, status, reset, archive, sum, help, printalias" << endl;
 }
 
-void list(vector<pair<string, int> >& tasks, pair<string, int>& activeTask)
-{
-	if(tasks.size() > 0)
-	{
+void printAlias(){
+	for(auto it = alias.begin(); it != alias.end(); it++){
+		cout << it->first << "\t -> \t" << it->second << endl;
+	}
+}
+
+void list(tasklist& tasks, task& activeTask){
+	if(tasks.size() > 0)	{
 		cout << "tasks:" << endl;
-		for(int i = 0; i < tasks.size(); i++)
-		{
+		for(int i = 0; i < tasks.size(); i++){
 			cout << i << ":\t" << tasks[i].first << "\t";
 			outputNiceTimespan(tasks[i].second);
 			cout << "\n";
 		}
 
 		cout << endl;
-	}
-	else
-	{
+	}else{
 		cout << "no tasks" << endl;
 	}
 
-	if(activeTask.first != "null")
-	{
+	if(activeTask.first != "null")	{
 		cout << "Active task:" << endl;
 		cout << activeTask.first << "\t";
 		outputNiceTimespan(time(0) - activeTask.second);
@@ -182,216 +197,217 @@ void list(vector<pair<string, int> >& tasks, pair<string, int>& activeTask)
 	}
 }
 
-void add(vector<pair<string, int> >& tasks, string name)
-{
+void add(tasklist& tasks, string name){
 	int tnum = findTaskNum(tasks, name);
-	if(tnum < 0)
-	{
+	if(tnum < 0)	{
 		tasks.push_back(make_pair(name, 0));
 		cout << name << " added" << endl;
-	}
-	else
-	{
+	}else{
 		cout << "task already exists" << endl;
 	}
 }
 
-void remove(vector<pair<string, int> >& tasks, pair<string, int>& activeTask, string name)
-{
+void remove(tasklist& tasks, task& activeTask, string name){
 	int tnum = findTaskNum(tasks, name);
-	if(tnum >= 0)
-	{
-		cout << "this will remove the task '" << name << "' . Continue? (y/n)" << endl;
-		string response;
-		do
-		{
-			cin >> response;
-		} while(response != "y" && response != "n");
-		if(response == "y")
-		{
+	if(tnum >= 0){
+		if(askConfirmation("this will remove the task '" + name + "' . Continue? (y/n)")){
 			tasks.erase(tasks.begin() + tnum);
-			if(activeTask.first == name)
-			{
+			if(activeTask.first == name){
 				activeTask.first = "null";
 			}
 			cout << name << " removed" << endl;
 		}
-	}
-	else
-	{
+	}else{
 		cout << "task not found" << endl;
 	}
 }
-	
-void end(vector<pair<string, int> >& tasks, pair<string, int>& activeTask)
-{
+
+void end(tasklist& tasks, task& activeTask){
 	int tnum = findTaskNum(tasks, activeTask.first);
-	if(tnum >= 0)
-	{
+	if(tnum >= 0){
 		tasks[tnum].second += time(0) - activeTask.second;
 		cout << "'" << activeTask.first << "' ran for ";
 		outputNiceTimespan(time(0) - activeTask.second);
 		cout << endl;
-		ofstream log("timemgrlog.txt", ios_base::app);
+		ofstream log(timemgrlogFile, ios_base::app);
 		log << time(0) << "\t" << activeTask.first << "\t" << time(0) - activeTask.second << "s" << endl;
 		log.close();
 		activeTask.first = "null";
-	}
-	else
-	{
+	}else{
 		cout << "no task running" << endl;
 		activeTask.first = "null";
 	}
 }
-	
-void start(vector<pair<string, int> >& tasks, pair<string, int>& activeTask, string name)
-{
-	if(activeTask.first != "null")
-	{
-		cout << "the task '" << activeTask.first << "' is still running. Stop? (y/n)" << endl;
-		string response;
-		do
-		{
-			cin >> response;
-		} while(response != "y" && response != "n");
-		if(response == "y")
-		{
+
+void start(tasklist& tasks, task& activeTask, string name){
+	int tnum = findTaskNum(tasks, name);
+	if(tnum < 0){
+		add(tasks, name);
+		tnum = findTaskNum(tasks, name);
+	}
+	if(activeTask.first != "null")	{
+		if(askConfirmation("the task '" + activeTask.first + "' is still running. Stop? (y/n)" )){
 			end(tasks, activeTask);
+		} else {
+			return;
 		}
 	}
-	if(activeTask.first == "null")
-	{
-		int tnum = findTaskNum(tasks, name);
-		if(tnum >= 0)
-		{
-			activeTask.first = name;
-			activeTask.second = time(0);
-			cout << name << " started" << endl;
-		}
-		else
-		{
-			cout << name << " not found" << endl;
-		}
-	}
+	activeTask.first = name;
+	activeTask.second = time(0);
+	cout << name << " started" << endl;
 }
-	
-void status(vector<pair<string, int> >& tasks, pair<string, int>& activeTask)
-{
-	if(activeTask.first != "null")
-	{
+
+void status(tasklist& tasks, task& activeTask){
+	if(activeTask.first != "null"){
 		cout << "Active task:" << endl;
 		cout << activeTask.first << "\t";
 		outputNiceTimespan(time(0) - activeTask.second);
 		cout << endl;
-	}
-	else
-	{
+	}else{
 		cout << "no task running" << endl;
 	}
 }
 
-int main(int argv, char** args)
-{
-    for(int i = 0; i < argv; i++)
-    {
-        // flags
-        if(string(args[i]) == "-x")
-        {
-            return 0;
-        }
-    }
+void reset(tasklist& tasks){
+	if(!askConfirmation("you will lose all your data. Continue? (y/n)")){
+		return;
+	}
+	for(int i = 0; i < tasks.size(); i++){
+		tasks[i].second = 0;
+	}
+	cout << "Done" << endl;
+}
 
-    string cmd;
-    if(argv == 1)
-    {
-        cmd = "help";
-    }
-    else
-    {
-        cmd = string(args[1]);
-    }
+void archive(string filename, tasklist& tasks, task& activeTask){
+	if(fileExists(filename)){
+		if(!askConfirmation("file exists. Overwrite? (y/n)")){
+			return;
+		}
+	}
+	tasklist tmptasks (tasks);
+	task tmpactiveTask = make_pair("null", 0);
+	if(activeTask.first != "null"){
+		int tnum = findTaskNum(tmptasks, activeTask.first);
+		if(tnum >= 0){
+			tmptasks[tnum].second += time(0) - activeTask.second;
+		}
+	}
+	writeFile(filename, tmptasks, tmpactiveTask);
+	
+	cout << "Done" << endl;
+}
+
+void sum(tasklist& tasks, int argv, char** args, int start){
+	int res = 0;
+	
+	for(int i = start; i < argv; i++){
+		int num = findTaskNum(tasks, string(args[i]));
+		if(num >= 0){
+			res += tasks[num].second;
+		}
+	}
+	
+	if(start >= argv){
+		for(int i = 0; i < tasks.size(); i++){
+			res += tasks[i].second;
+		}
+	}
+	
+	outputNiceTimespan(res);
+	cout << endl;
+}
+
+int main(int argv, char** args){
+	for(int i = 0; i < argv; i++){
+		// flags
+		if(string(args[i]) == "-x"){
+			return 0;
+		}
+	}
+
+	string cmd;
+	if(argv == 1){
+		cmd = "help";
+	}else{
+		cmd = string(args[1]);
+	}
 
 	toLower(cmd);
+	
+	initAlias();
 
-    cmd = replaceAlias(cmd);
+	cmd = replaceAlias(cmd);
 
-    if(cmd == "init")
-    {
+	if(cmd == "init"){
 		init();
-    }
-    else if (cmd == "list" || cmd == "add" || cmd == "remove" || cmd == "start" || cmd == "end" || cmd == "status")
-    {
-		if(!fileExists()){
+	}else if(cmd == "help"){
+		help();
+	}else if(cmd == "printalias"){
+		printAlias();
+	}else {
+		if(!fileExists(timemgrFile)){
 			init();
 		}
 		
-        vector<pair<string, int> > tasks;
-        pair<string, int> activeTask;
-		readFile(tasks, activeTask);
+		tasklist tasks;
+		task activeTask;
+		readFile(timemgrFile, tasks, activeTask);
 
-        // Do Stuff
-        if(cmd == "list")
-        {
+		// Do Stuff
+		if(cmd == "list"){
 			list(tasks, activeTask);
-        }
-        else if(cmd == "add")
-        {
-            if(argv > 2)
-            {
+		}else if(cmd == "add"){
+			if(argv > 2){
 				string name = args[2];
 				toLower(name);
 				add(tasks, name);
-            }
-            else
-            {
-                cout << "missing task name. Usage: tm add <taskname>" << endl;
-            }
-        }
-        else if(cmd == "remove")
-        {
-            if(argv > 2)
-            {
+			}
+			else{
+				cout << "missing task name. Usage: tm add <taskname>" << endl;
+			}
+		}else if(cmd == "remove"){
+			if(argv > 2){
 				string name = args[2];
 				toLower(name);
 				remove(tasks, activeTask, name);
-            }
-            else
-            {
-                cout << "missing task name. Usage: tm remove <taskname>" << endl;
-            }
-        }
-        else if(cmd == "start")
-        {
-            if(argv > 2)
-            {
+			}
+			else{
+				cout << "missing task name. Usage: tm remove <taskname>" << endl;
+			}
+		}else if(cmd == "start"){
+			if(argv > 2){
 				string name = args[2];
 				toLower(name);
 				start(tasks, activeTask, name);
-            }
-            else
-            {
-                cout << "missing task name. Usage: tm start <taskname>" << endl;
-            }
-        }
-        else if(cmd == "end")
-        {
+			}
+			else{
+				cout << "missing task name. Usage: tm start <taskname>" << endl;
+			}
+		}else if(cmd == "end"){
 			end(tasks, activeTask);
-        }
-        else if(cmd == "status")
-        {
+		}else if(cmd == "status"){
 			status(tasks, activeTask);
-        }
+		} else if(cmd == "reset"){
+			reset(tasks);
+		}else if(cmd == "archive"){
+			string filename = "timemgrarchive.txt";
+			if(argv > 2){
+				filename = args[2];
+			}
+			archive(filename, tasks, activeTask);
+		} else if(cmd == "sum") {
+			sum(tasks, argv, args, 2);
+		}else{
+			int num = findTaskNum(tasks, cmd);
+			if(num >= 0){
+				start(tasks, activeTask, cmd);
+			} else {
+				cout << "unknown command. type help to see the available commands" << endl;
+			}
+		}
 
-		writeFile(tasks, activeTask);
-    }
-    else if(cmd == "help")
-    {
-		help();
-    }
-    else
-    {
-        cout << "unknown command. type help to see the available commands" << endl;
-    }
+		writeFile(timemgrFile, tasks, activeTask);
+	}
 
-    return 0;
+	return 0;
 }
