@@ -13,10 +13,15 @@ First use: call *tm init*
 
 #Commands:
 ```
+tm init		initializes the save file
 tm list		list all available tasks
 tm add		add a new task
 tm remove	remove a task
 tm start	start a task
 tm end		end the active task
 tm status	shows the active task
+tm reset	resets the time for all tasks
+tm archive	saves the save file under a different name
+tm sum		sums up the times of all the given tasks (e.g. tm sum task1 task3 task4)
+tm pa		prints all defined aliases
 ```

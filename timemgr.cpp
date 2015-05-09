@@ -252,7 +252,7 @@ void start(tasklist& tasks, task& activeTask, string name){
 			return;
 		}
 	}
-	activeTask.first = name;
+	activeTask.first = tasks[tnum].first;
 	activeTask.second = time(0);
 	cout << name << " started" << endl;
 }
