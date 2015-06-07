@@ -66,6 +66,8 @@ void initAlias(){
 	alias["%"] = "archive";
 	alias["++"] = "sum";
 	alias["!"] = "sum";
+	alias["rn"] = "rename";
+	alias["cat"] = "changeactivetask";
 	alias["h"] = "help";
 	alias["?"] = "help";
 	alias["/?"] = "help";
@@ -166,7 +168,8 @@ void help(){
 	cout << "(c) 2014 - 2015 Benjamin Schmid" << endl;
 	cout << endl;
 	cout << "Available commands:" << endl;
-	cout << "init, list, add, remove, start, end, status, reset, archive, sum, help, printalias" << endl;
+	cout << "init, list, add, remove, start, end, status, reset, archive, sum, "
+	     << "rename, changeactivetask, help, printalias" << endl;
 }
 
 void printAlias(){
@@ -297,13 +300,16 @@ void archive(string filename, tasklist& tasks, task& activeTask){
 	cout << "Done" << endl;
 }
 
-void sum(tasklist& tasks, int argv, char** args, int start){
+void sum(tasklist& tasks, task& activeTask, int argv, char** args, int start){
 	int res = 0;
 	
 	for(int i = start; i < argv; i++){
 		int num = findTaskNum(tasks, string(args[i]));
 		if(num >= 0){
 			res += tasks[num].second;
+		}
+		if(num == -2){
+			res += activeTask.second;
 		}
 	}
 	
@@ -315,6 +321,34 @@ void sum(tasklist& tasks, int argv, char** args, int start){
 	
 	outputNiceTimespan(res);
 	cout << endl;
+}
+
+void rename(tasklist& tasks, task& activeTask, string oldName, string newName){
+	int res = findTaskNum(tasks, oldName);
+	int newRes = findTaskNum(tasks, newName);
+	if(res >= 0){
+		if(newRes < 0){
+			if(activeTask.first == tasks[res].first){
+				activeTask.first = newName;
+			}
+			tasks[res].first = newName;
+			cout << "Done" << endl;
+		} else {
+			cout << "task already exists" << endl;
+		}
+	} else {
+		cout << "task not found" << endl;
+	}
+}
+
+void changeActiveTask(tasklist& tasks, task& activeTask, string newTask){
+	int res = findTaskNum(tasks, newTask);
+	if(res >= 0){
+		activeTask.first = tasks[res].first;
+		cout << "Done" << endl;
+	} else {
+		cout << "task not found" << endl;
+	}
 }
 
 int main(int argv, char** args){
@@ -396,7 +430,19 @@ int main(int argv, char** args){
 			}
 			archive(filename, tasks, activeTask);
 		} else if(cmd == "sum") {
-			sum(tasks, argv, args, 2);
+			sum(tasks, activeTask, argv, args, 2);
+		} else if(cmd == "rename"){
+			if(argv > 3){
+				rename(tasks, activeTask, args[2], args[3]);
+			} else {
+				cout << "missing task name. Usage: tm rename <oldTaskName> <newTaskName>" << endl;
+			}
+		} else if(cmd == "changeactivetask"){
+			if(argv > 2){
+				changeActiveTask(tasks, activeTask, args[2]);
+			} else {
+				cout << "missing task name. Usage: tm changeactivetask <newTask>" << endl;
+			}
 		}else{
 			int num = findTaskNum(tasks, cmd);
 			if(num >= 0){

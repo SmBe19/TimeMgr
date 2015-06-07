@@ -22,6 +22,8 @@ tm end		end the active task
 tm status	shows the active task
 tm reset	resets the time for all tasks
 tm archive	saves the save file under a different name
-tm sum		sums up the times of all the given tasks (e.g. tm sum task1 task3 task4)
+tm sum		sums up the times of all the given tasks (e.g. tm sum task1 task3 task4). Use -2 for the active task.
+tm rename	renames the given task (e.g. tm rename oldTaskName newTaskName).
+tm cat		changes the active task to the given task.
 tm pa		prints all defined aliases
 ```
