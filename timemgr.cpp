@@ -309,7 +309,7 @@ void sum(tasklist& tasks, task& activeTask, int argv, char** args, int start){
 			res += tasks[num].second;
 		}
 		if(num == -2){
-			res += activeTask.second;
+			res += time(0) - activeTask.second;
 		}
 	}
 	
